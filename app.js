@@ -12,6 +12,7 @@ mongoose.connect('mongodb://localhost:27017/yelpcamp', {
   useUnifiedTopology: true,
   useNewUrlParser: true,
   useCreateIndex: true, // --> False by default. Set to true to make Mongoose's default index build use createIndex() instead of ensureIndex() to avoid deprecation warnings from the MongoDB driver.
+  useFindAndModify: false
 });
 
 const db = mongoose.connection;
@@ -28,7 +29,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(methodOverride('_method'));
 app.use(express.urlencoded({ extended: true }));
-
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use('/campgrounds', campgrounds);
