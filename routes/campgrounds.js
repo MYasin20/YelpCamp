@@ -27,6 +27,7 @@ router.get('/new', isLoggedIn, (req, res) => {
 
 router.post('/', isLoggedIn, validatedCampground, catchAsync(async (req, res, next) => {
   const campground = new Campground(req.body.campground);
+  campground.author = req.user._id
   await campground.save();
   req.flash('success', 'Successful!!');
   res.redirect(`/campgrounds/${campground._id}`);
@@ -34,7 +35,7 @@ router.post('/', isLoggedIn, validatedCampground, catchAsync(async (req, res, ne
 
 router.get('/:id', catchAsync(async (req, res) => {
   const { id } = req.params;
-  const campground = await Campground.findById(id).populate('reviews');
+  const campground = await Campground.findById(id).populate('reviews').populate('author', 'username');
   if(!campground) {
     req.flash('error', 'Cannot find that campground');
     return res.redirect('/campgrounds');
