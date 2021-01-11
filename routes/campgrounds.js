@@ -1,20 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const catchAsync = require('../utils/catchAsync');
-const ExpressError = require('../utils/ExpressError');
 const Campground = require('../models/camground');
-const { campgroundSchema } = require('../schemas');
-const { isLoggedIn } = require('../middleware');
-
-const validatedCampground = (req, res, next) => {
-  const { error } = campgroundSchema.validate(req.body)
-  if (error) {
-    const msg = error.details.map(el => el.message).join(',');
-    throw new ExpressError(msg, 400);
-  } else {
-    next();
-  }
-}
+const { isLoggedIn, isAuthor, validatedCampground } = require('../middleware');
 
 router.get('/', catchAsync(async (req, res) => {
   const campgrounds = await Campground.find({});
@@ -43,7 +31,7 @@ router.get('/:id', catchAsync(async (req, res) => {
   res.render('campgrounds/show', { campground })
 }));
 
-router.get('/:id/edit', isLoggedIn, catchAsync(async (req, res) => {
+router.get('/:id/edit', isLoggedIn, isAuthor, catchAsync(async (req, res) => {
   const { id } = req.params;
   const campground = await Campground.findById(id);
   if(!campground) {
@@ -53,19 +41,24 @@ router.get('/:id/edit', isLoggedIn, catchAsync(async (req, res) => {
   res.render('campgrounds/edit', { campground });
 }));
 
-router.patch('/:id', isLoggedIn, validatedCampground, catchAsync(async (req, res) => {
+router.patch('/:id', isLoggedIn, isAuthor, validatedCampground, catchAsync(async (req, res) => {
   const { id } = req.params;
   const campground = await Campground.findByIdAndUpdate(id, req.body.campground);
-  req.flash('success', 'Successfully Updated Campground')
+  req.flash('success', 'Successfully Updated Campground');
   res.redirect(`/campgrounds/${campground._id}`);
 }));
 
-router.delete('/:id', isLoggedIn, async (req, res) => {
+router.delete('/:id', isLoggedIn, isAuthor, catchAsync(async (req, res) => {
   const { id } = req.params;
+  const campground = await Campground.findById(id);
+  if(!campground.author.equals(req.user._id)) {
+    req.flash('error', 'You do not have permission to do that');
+    return res.redirect(`/campgrounds/${id}`)
+  }
   await Campground.findByIdAndDelete(id, req.body.campground);
   req.flash('success', 'Successfully deleted campground');
   res.redirect('/campgrounds');
-});
+}));
 
 
 module.exports = router;

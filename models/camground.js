@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { campgroundSchema } = require('../schemas');
 const Review = require('./review');
 const Schema = mongoose.Schema;
 
@@ -19,6 +20,10 @@ const CampgroundSchema = new Schema({
     }
   ]
 });
+
+// CampgroundSchema.pre('findOneAndUpdate', function(data) {
+//   console.log(data);
+// });
 
 CampgroundSchema.post('findOneAndDelete', async function(data) {
   if(data) {
